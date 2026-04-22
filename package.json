@@ -1,0 +1,29 @@
+{
+  "name": "@fattly/god-skill",
+  "version": "0.0.0-development",
+  "description": "God Skill · 上帝造人 - 人物深度蒸馏引擎。输入任何一个人名，自动完成调研 → 提炼认知操作系统 → 生成可运行的人物 Skill",
+  "keywords": [
+    "skill",
+    "ai-agent",
+    "character-distillation",
+    "cognitive-framework",
+    "persona"
+  ],
+  "homepage": "https://github.com/fattly/god-skill.git#readme",
+  "bugs": {
+    "url": "https://github.com/fattly/god-skill.git/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fattly/god-skill.git.git"
+  },
+  "license": "MIT",
+  "author": "fattly",
+  "files": [
+    "SKILL.md",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,89 @@
+name: Publish God Skill on GitHub Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # 1️⃣ 拉代码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Node 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+
+      # 3️⃣ 安装依赖
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      # 4️⃣ 提取 release 版本号
+      - name: Extract version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 5️⃣ 同步 package.json 版本
+      - name: Sync version
+        run: npm version $VERSION --no-git-tag-version
+
+      # 6️⃣ 校验 skill 文件完整性
+      - name: Validate skill files
+        run: |
+          echo "🔍 Validating God Skill files..."
+          
+          # 检查核心文件
+          test -f SKILL.md || (echo "❌ SKILL.md missing" && exit 1)
+          test -f README.md || (echo "❌ README.md missing" && exit 1)
+          test -f package.json || (echo "❌ package.json missing" && exit 1)
+          
+          # 检查 SKILL.md 关键内容
+          grep -q "name: god-skill" SKILL.md || (echo "❌ SKILL.md missing frontmatter name" && exit 1)
+          grep -q "Phase 0" SKILL.md || (echo "❌ SKILL.md missing Phase 0" && exit 1)
+          grep -q "灵魂层" SKILL.md || (echo "❌ SKILL.md missing Soul Layer" && exit 1)
+          
+          # 检查 package.json 关键字段
+          node -e "const pkg = require('./package.json'); 
+                   if (!pkg.name) { console.error('❌ Missing package name'); process.exit(1); }
+                   if (!pkg.description) { console.error('❌ Missing package description'); process.exit(1); }
+                   console.log('✅ package.json validation passed');"
+          
+          echo "✅ All skill files validated successfully"
+
+      # 7️⃣ 打印 skill 信息
+      - name: Show skill info
+        run: |
+          echo "========================================="
+          echo "📦 Publishing God Skill"
+          echo "========================================="
+          echo "Version: $VERSION"
+          echo "Package: $(node -p "require('./package.json').name")"
+          echo "Description: $(node -p "require('./package.json').description")"
+          echo "License: $(node -p "require('./package.json').license")"
+          echo "Repository: $(node -p "require('./package.json').repository.url")"
+          echo "========================================="
+          echo "Files to publish:"
+          ls -lh SKILL.md README.md package.json
+          echo "========================================="
+
+      # 8️⃣ 发布 npm
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      # 9️⃣ 发布成功通知
+      - name: Publish success
+        if: success()
+        run: |
+          echo "✅ God Skill v$VERSION published successfully!"
+          echo "📖 View at: https://www.npmjs.com/package/@fattly/god-skill"
