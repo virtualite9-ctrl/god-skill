@@ -1,27 +1,32 @@
 {
-  "name": "@fattly/god-skill",
+  "name": "@virtualite9-ctrl/god-skill",
   "version": "0.0.0-development",
-  "description": "God Skill · 上帝造人 - 人物深度蒸馏引擎。输入任何一个人名，自动完成调研 → 提炼认知操作系统 → 生成可运行的人物 Skill",
+  "description": "Hermes-native, source-grounded person distillation engine adapted from fattly/god-skill",
   "keywords": [
     "skill",
+    "hermes-agent",
     "ai-agent",
     "character-distillation",
     "cognitive-framework",
-    "persona"
+    "persona",
+    "source-grounded"
   ],
-  "homepage": "https://github.com/fattly/god-skill.git#readme",
+  "homepage": "https://github.com/virtualite9-ctrl/god-skill#readme",
   "bugs": {
-    "url": "https://github.com/fattly/god-skill.git/issues"
+    "url": "https://github.com/virtualite9-ctrl/god-skill/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fattly/god-skill.git.git"
+    "url": "git+https://github.com/virtualite9-ctrl/god-skill.git"
   },
   "license": "MIT",
-  "author": "fattly",
+  "author": "fattly; Hermes adaptation by 3_headed",
   "files": [
     "SKILL.md",
-    "README.md"
+    "README.md",
+    "references/",
+    "templates/",
+    "scripts/"
   ],
   "publishConfig": {
     "access": "public"

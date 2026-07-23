@@ -1,279 +1,120 @@
-# God Skill · 上帝造人
+# God Skill for Hermes · 근거 기반 인물 증류 엔진
 
-**输入任何一个名字，蒸馏出一个可运行的认知操作系统。**
+**사람을 흉내 내는 프롬프트가 아니라, 출처로 추적 가능한 인지·결정·표현 구조를 만든다.**
 
-> 上帝造人，赋予的是灵魂。God Skill 蒸馏人，提炼的也是灵魂——
-> 不是他们说了什么，而是他们为什么需要成为他们自己。
+이 저장소는 [fattly/god-skill](https://github.com/fattly/god-skill)을 Hermes Agent에 맞게 포팅한 포크다. 원본의 7차원 인물 증류 방법론은 보존하고 다음을 추가했다.
 
----
+- Hermes 네이티브 도구 매핑
+- 최대 3-lane `delegate_task` wave와 부모 read-back 검증
+- raw/research/final 분리 및 resumable `run-state.json`
+- source ledger와 `[S###]` claim traceability
+- 살아 있는 사람·사적 인물·실제 미성년자에 대한 fail-closed privacy/동의 규칙
+- 독립 calibration·boundary·voice·soul-layer QA
+- stdlib-only 정적 validator와 단위 테스트
+- 생성 결과를 Hermes user-local skill로 설치·검증하는 절차
 
-## 它是什么
+## 설치
 
-God Skill 是一个**人物深度蒸馏引擎**——一份任何支持 Skill/提示词工程的 AI 智能体都可以加载并执行的方法论文档。
-
-输入一个人名，智能体自动完成：
-**调研 → 提炼 → 验证 → 生成可运行的人物 Skill**
-
-蒸馏的不只是"这个人怎么想"，而是"这个人是什么"。
-
-```
-> 蒸馏科比·布莱恩特
-
-[人物类型判断: 运动员 + 商业]
-[启动 5 个通用 Agent + 2 个专属 Agent]
-[G1 长对话 · G2 表达DNA · G3 外部视角 · G4 时间线 · G5 灵魂层]
-[A5 竞技表现 · A2 商业决策]
-
-→ 生成 kobe-perspective/SKILL.md
-  · 认知层：心智模型（含驱动力追问）
-  · 决策层：决策启发式（含失效边界）
-  · 表达层：表达DNA（训练/赛场/媒体分层）
-  · 价值层：价值观层级（含代价分析）
-  · 谱系层：影响谱系（篮球谱系+文化对话）
-  · 边界层：认知盲区（含心理起源）
-  · 灵魂层：伤口 · 执念 · 死亡关系 · 意义押注
-```
-
----
-
-## 适用环境
-
-God Skill 是一份**方法论文档**，核心是 `SKILL.md` 中的调研框架、提炼流程和验证机制。任何支持加载外部 Skill 或系统提示词的 AI 智能体都可以使用。
-
-**快速安装（推荐）**：
+Hermes의 제3자 GitHub 설치 경로를 사용한다. 먼저 security scan 결과를 확인한다.
 
 ```bash
-# npx安装
-npx skills add fattly/god-skill
+hermes skills inspect https://raw.githubusercontent.com/virtualite9-ctrl/god-skill/main/SKILL.md
+hermes skills install --category research https://raw.githubusercontent.com/virtualite9-ctrl/god-skill/main/SKILL.md
 ```
 
-**安装流程（以 Claude Code 为例）**：
+설치 후 새 세션에서:
+
+```text
+/god-skill 이순신을 근거 기반으로 증류해
+/god-skill distill Ada Lovelace
+/god-skill 上帝造人 李小龙
+```
+
+Hermes CLI로 명시 로드할 수도 있다.
 
 ```bash
-# 克隆仓库
-git clone https://github.com/fattly/god-skill.git.git
-
-# 放入技能目录（项目级，Claude Code 路径示例）
-cp -r god-skill/ .claude/skills/god-skill/
-
-# 或全局安装
-cp -r god-skill/ ~/.claude/skills/god-skill/
+hermes --skills god-skill
 ```
 
-> 其他支持 Skill/提示词工程的平台（如 Cursor、各类 Agent 框架）：
-> 将 `SKILL.md` 的内容作为系统提示词加载，或按所在平台的 Skill 格式集成即可。
+## 기본 산출물
 
----
-
-## 各行各业，皆可蒸馏
-
-God Skill 不限定人物类型。**只要是人，皆可蒸馏。**
-
-5 个通用 Agent 对所有人物都运行，11 个专属 Agent 按行业激活，AX 自定义 Agent 兜底所有未覆盖的行业：
-
-| 人物类型 | 核心信息所在 | 专属 Agent |
-|---------|------------|-----------|
-| 思想家 / 学者 / 作家 / 哲学家 | 著作、论文、长访谈 | A1 著作深挖 |
-| 企业家 / 投资人 / 管理者 | 决策记录、股东信、产品选择 | A2 商业决策 |
-| 音乐人 / 歌手 / 词曲人 / 制作人 | 歌词、专辑叙事、制作选择、现场 | A3 音乐作品 |
-| 演员 / 导演 / 编剧 / 制片人 | 角色选择、导演手法、片场行为 | A4 影视作品 |
-| 运动员 / 武术家 / 竞技教练 | 训练哲学、关键时刻、伤病应对 | A5 竞技表现 |
-| 视觉艺术家 / 设计师 / 建筑师 | 作品演变、材质选择、视觉母题 | A6 视觉作品 |
-| 网红 / 内容创作者 / 播客主 | 选题逻辑、人设演变、粉丝关系 | A7 内容创作 |
-| 政治家 / 活动家 / 革命者 / 宗教领袖 | 演讲、行动记录、危机处理 | A8 公共行动 |
-| 科学家 / 发明家 / 工程师 | 研究方法、实验记录、学术争论 | A9 科研创造 |
-| 厨师 / 工匠 / 手工艺人 | 技术哲学、师承关系、作品演变 | A10 匠艺实践 |
-| 教育者 / 导师 / 心理咨询师 | 教学方法、学生关系、课程设计 | A11 教育传授 |
-| **棋手 / 外交官 / 宇航员 / 法官……** | **该人物最诚实的输出形式** | **AX 自定义** |
-
----
-
-## 七个维度，七个层次
-
-God Skill 对所有人物提炼相同的七个维度，对应七个层次，但**具体内容因类型而异**——
-音乐人的表达DNA在歌词里，运动员的在身体语言里，网红的在选题和人设里。
-
-| 层次 | 维度 | 核心问题 |
-|------|------|---------|
-| 认知层 | 心智模型 | 这个人用什么框架看世界？框架背后是什么驱动力？ |
-| 决策层 | 决策启发式 | 这个人如何做判断？什么时候这些规则会失效？ |
-| 表达层 | 表达 DNA | 这个人如何输出自己？情绪如何影响输出？ |
-| 价值层 | 价值观层级 | 这个人相信什么？坚持这些信念付出了什么代价？ |
-| 谱系层 | 影响谱系 | 这个人从哪里来？在与谁对话或对抗？ |
-| 边界层 | 认知盲区 | 这个人看不见什么？盲区从哪里来？ |
-| **灵魂层** | **存在处境** | **伤口 · 执念 · 与死亡的关系 · 意义押注 · 核心矛盾** |
-
----
-
-## 灵魂层：God Skill 的核心
-
-这是 God Skill 区别于普通人物分析的核心维度。
-
-每个人物都提炼四个存在切面：
-
-**伤口图谱**：哪些早年经历反复被触碰？补偿模式是什么？
-
-**执念结构**：他们不能停止的事是什么？跨越什么他们会不再是自己？
-
-**与死亡的关系**：工作节奏背后的急迫感从哪里来？他们在对抗什么消逝？
-
-**意义押注**：他们把存在感押注在什么上？如果这个押注失败会怎样？
-
-**所有灵魂层推断都标注置信度和依据——"显得深刻但无法证伪"是最明确反对的失败模式。**
-
----
-
-## 快速开始
-
-### 安装 God Skill
-
-以 Claude Code 为例（其他平台将 `SKILL.md` 作为系统提示词或 Skill 文件加载即可）：
-
-```bash
-# 克隆仓库
-git clone https://github.com/fattly/god-skill.git.git
-
-# 放入 Claude Code 技能目录（项目级，路径示例）
-cp -r god-skill/ .claude/skills/god-skill/
-
-# 或全局安装（任何项目下都可使用）
-cp -r god-skill/ ~/.claude/skills/god-skill/
-```
-
-### 开始使用
-
-对你的 AI 智能体说：
-
-```
-蒸馏查理·芒格
-```
-```
-god skill，帮我理解科比
-```
-```
-蒸馏泰勒·斯威夫特
-```
-```
-distill 费兰·阿德里亚
-```
-```
-帮我蒸馏卡斯帕罗夫
-```
-```
-我有这位歌手的专辑歌词文件，帮我蒸馏他
-```
-
-智能体会自动判断人物类型，激活对应的 Agent 组合，完成全流程，生成 `{人名}-perspective/SKILL.md`。
-
----
-
-## 本地素材支持
-
-God Skill 支持**本地素材优先**模式。如果你有比网络上更好的一手材料，直接提供给智能体，God Skill 会优先消化，只对缺口维度补充网络搜索。
-
-| 人物类型 | 适合提供的本地素材 |
-|---------|-----------------|
-| 音乐人 | 完整歌词文档、专辑创作手记、未发布曲目 |
-| 运动员 | 训练日记、战术手记、赛事录像转录 |
-| 演员/导演 | 剧本批注、导演阐述、片场日记 |
-| 网红 | 内容策划文档、选题日志、运营记录 |
-| 思想家 | 完整书稿、未发布演讲稿、私人笔记 |
-| 科学家 | 实验日志、研究草稿、内部通信 |
-| 厨师/工匠 | 配方手记、创作日志、师承笔记 |
-
----
-
-## 蒸馏效果示例
-
-### 查理·芒格 · 示例对话（摘自完整 Skill）
-
-**用户**：我正在考虑投资一家 AI 创业公司，这个行业发展很快，我觉得不能错过。
-
-**芒格**：先停一下。"不能错过"这四个字本身就是一个警告信号——这是社会认同偏误和错失恐惧在同时工作。
-
-我会先反过来想：什么样的AI投资会让我彻底亏光？大概是：技术壁垒被后来者轻易复制、客户粘性很低、烧钱速度远超收入增长、创始人把融资当成终点而非起点。
-
-然后我会问：这家公司的情况如何？
-
-如果你说"我不知道，但行业在高速增长"，那我的答案是：等你真正理解这家公司再说。行业增长不会自动传导到某一家公司。一个市场里可以有很多输家，即使市场本身是赢家。
-
-我在科技行业犯过很多错，原因大多是我以为我理解，其实我不理解。这是我目前最深刻的教训。
-
----
-
-### 科比·布莱恩特 · 灵魂层片段
-
-> 以下是推断，不是事实。置信度标注在括号内。
-
-**核心伤口**：1996年在费城以高中生身份进入NBA，身处76人队选秀现场却被湖人选走——这种"永远不被家乡认可"的处境在科比的表达中反复出现。更深的伤口是他对父亲职业生涯的复杂感情：他要超越父亲，又要证明这种超越不是背叛。（置信度：中，依据：多次访谈中提及费城往事，以及他对"被认可"异常敏感的反应）
-
-**意义押注**：他把意义感押注在"被历史记住是最伟大之一"上。这解释了他2013年跟腱断裂后那个罚球——那不是职业素养，是他无法接受"在不完整的状态下结束"。（置信度：高，依据：多个队友证词+本人访谈）
-
----
-
-## 文件结构
-
-```
-god-skill/
-├── SKILL.md          # God Skill 主体（作为 Skill 文件或系统提示词加载）
-└── README.md         # 本文件
-
-# God Skill 生成的人物 Skill 结构：
-{人名}-perspective/
+```text
+<slug>-perspective/
 ├── SKILL.md
-└── references/
-    ├── research/
-    │   ├── 通用Agent输出/
-    │   │   ├── G1-conversations.md
-    │   │   ├── G2-expression-dna.md
-    │   │   ├── G3-external-views.md
-    │   │   ├── G4-timeline.md
-    │   │   └── G5-soul-layer.md
-    │   └── 专属Agent输出/         # 按类型激活
-    │       ├── A3-music-works.md  （音乐人）
-    │       ├── A5-athletic-performance.md （运动员）
-    │       ├── AX-custom-{领域}.md （自定义行业）
-    │       └── ...
-    └── sources/
-        ├── local/                 # 本地素材
-        ├── media/
-        ├── works/
-        └── data/
+├── run-state.json
+├── references/
+│   ├── source-ledger.md
+│   ├── source-index.md
+│   ├── research/general/G1-conversations.md
+│   ├── research/general/G2-expression-dna.md
+│   ├── research/general/G3-external-views.md
+│   ├── research/general/G4-timeline.md
+│   ├── research/general/G5-soul-layer.md 또는 G5-omission.md
+│   └── research/specialist/A?-<domain>.md
+└── validation/
+    ├── calibration.md
+    ├── boundary.md
+    ├── voice-blind-test.md
+    └── final-scorecard.md
 ```
 
----
+## 실행 원칙
 
-## 贡献
+1. 사용자가 파일·URL을 주면 그 원자료를 먼저 읽는다.
+2. 사실, 본인 진술, 타인 평가, 실제 행동, 연구자 추론을 구분한다.
+3. 모순을 지우지 않고 시간·맥락·출처 수준에 따라 보존한다.
+4. 영혼층은 진단이 아니라 반증 가능한 해석이며, source ID·반례·신뢰도가 필수다.
+5. child Agent의 성공 문구를 믿지 않고 부모가 산출물을 실제로 읽는다.
+6. static validator와 독립 QA를 통과하기 전에는 생성 skill을 설치하지 않는다.
+7. 설치본에는 sanitized source index만 포함하고 내부 원장·raw 자료·validation·절대 로컬 경로를 제외한다.
 
-欢迎以下形式的贡献：
+## 검증
 
-**提交人物 Skill**：用 God Skill 蒸馏了某个人物，欢迎 PR。请包含完整的 `references/research/` 调研文件，让社区能验证蒸馏过程。提交前请对照 SKILL.md 中的 Phase 4 质量验证标准自查。
+저장소 테스트:
 
-**扩展专属 Agent**：发现某个行业需要新的专属 Agent，或现有 Agent 的提取维度不够准确，开 Issue 讨论，说明：该行业的核心信息藏在哪里、现有哪个 Agent 最接近、差距是什么。
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m py_compile scripts/validate_persona_skill.py
+```
 
-**改进灵魂层框架**：灵魂层是最难做好也最有价值的维度，欢迎方法论上的讨论和改进。
+현재 회귀 suite는 정상 경로와 real-minor 차단, private G5 생략, source-count 위조, QA hash 위조, 긴 인용, 절대 경로, malformed YAML/UTF-8, decoy 입력을 포함한 15개 사례를 검사한다.
 
-**增加语言支持**：目前以中文为主，欢迎英文/日文版本。翻译时请保留核心概念的准确性，而不只是字面翻译。
+생성된 인물 프로젝트:
 
-**分享使用案例**：在 Discussions 分享你蒸馏了谁、使用了什么类型的本地素材、蒸馏出了什么意外的洞见。
+```bash
+python3 scripts/validate_persona_skill.py /absolute/path/to/person-perspective --json
+```
 
----
+초안 상태만 점검할 때:
 
-## License
+```bash
+python3 scripts/validate_persona_skill.py /path/to/draft --draft --json
+```
 
-MIT — 使用、修改、构建都欢迎。
+## 파일 안내
 
-仓库地址：[https://github.com/fattly/god-skill.git](https://github.com/fattly/god-skill.git)
+- [`SKILL.md`](SKILL.md): Hermes용 실행 코어
+- [`references/hermes-execution.md`](references/hermes-execution.md): delegation brief, state schema, resume·설치 규약
+- [`templates/persona-skill.md`](templates/persona-skill.md): 생성할 인물 skill 템플릿
+- [`templates/validation-artifact.md`](templates/validation-artifact.md): 독립 reviewer ID·artifact hash·hard-fail 계약
+- [`scripts/validate_persona_skill.py`](scripts/validate_persona_skill.py): 최종 산출물 정적 검증기
+- [`references/upstream-methodology.md`](references/upstream-methodology.md): 원본 Phase 0–2 및 G/A Agent 정의
+- [`references/upstream-persona-template.md`](references/upstream-persona-template.md): 원본 생성 템플릿과 예시
+- [`references/upstream-validation-and-edge-cases.md`](references/upstream-validation-and-edge-cases.md): 원본 QA·갱신·특수 상황 규칙
 
----
+## 안전 경계
 
-## 终注
+- 실제 미성년자의 심층 증류 금지; 비공개 개인은 명시적 동의와 soul-layer 비활성화가 필수
+- 정신건강, 질병, 성적 지향, 종교, 정치 성향 등 비공개 민감 속성 추론 금지
+- 채용·보험·수사·의료·법률·금융의 중대한 자동 의사결정에 사용 금지
+- 공개 자료의 긴 전문 복제 대신 짧은 인용과 정확한 위치 메타데이터 사용
+- “그 사람이 실제로 이렇게 말한다”가 아니라 “검증된 자료에서 추출한 프레임이라면”으로 표현
 
-God Skill 不复制人。它提炼人的认知结构。
+## Upstream과 라이선스
 
-无论是芒格的投资框架，科比的训练哲学，还是泰勒·斯威夫特的叙事策略——
-表层都是方法，内层都是一个人与自己的处境在搏斗。
+- Upstream: [fattly/god-skill](https://github.com/fattly/god-skill)
+- Fork: [virtualite9-ctrl/god-skill](https://github.com/virtualite9-ctrl/god-skill)
+- 기반 commit: `72fed112e9c390406e8463489f0b2a05b7160e8a`
+- License: MIT
 
-真正理解一个人，是理解他们为什么需要成为他们自己。
-
-那个问题，才是 God Skill 真正的输出。
+원본 방법론과 예시는 upstream 저작자 `fattly`에 귀속된다. Hermes 포팅·검증 도구·안전 규칙은 이 포크의 변경사항이다.

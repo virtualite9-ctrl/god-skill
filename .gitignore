@@ -47,3 +47,13 @@
 **/crashlytics-build.properties
 
 **/.DS_Store
+
+# Python tooling and test caches
+**/__pycache__/
+**/*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Local package artifacts
+*.tgz
