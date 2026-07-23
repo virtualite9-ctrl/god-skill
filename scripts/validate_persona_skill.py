@@ -228,6 +228,10 @@ def blockquote_lengths(text: str) -> list[int]:
     return lengths
 
 
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def add_missing_file(
     path: Path,
     label: str,
@@ -434,6 +438,75 @@ def validate(project: Path, draft: bool, allow_no_specialist: bool) -> dict:
                     errors.append(
                         f"run-state/frontmatter mismatch for {label}: {observed!r} != {expected!r}"
                     )
+        if not draft:
+            phases = run_state.get("phases", {})
+            if not isinstance(phases, dict):
+                errors.append("run-state phases must be an object")
+            else:
+                required_phases = {
+                    "identity": {"verified"},
+                    "ingest": {"verified"},
+                    "wave_1": {"verified"},
+                    "wave_2": {"verified"},
+                    "wave_3_g5": {"omitted"} if soul_disabled else {"verified"},
+                    "synthesis": {"verified"},
+                    "static_validation": {"in_progress", "verified"},
+                    "independent_validation": {"verified"},
+                }
+                for phase, allowed in required_phases.items():
+                    if phases.get(phase) not in allowed:
+                        errors.append(
+                            f"run-state phase {phase} must be one of {sorted(allowed)}, got {phases.get(phase)!r}"
+                        )
+
+            artifacts = run_state.get("artifacts", {})
+            if not isinstance(artifacts, dict):
+                errors.append("run-state artifacts must be an object")
+                artifacts = {}
+            artifact_by_path: dict[str, dict[str, object]] = {}
+            for artifact_name, artifact in artifacts.items():
+                if not isinstance(artifact, dict):
+                    errors.append(f"run-state artifact {artifact_name} must be an object")
+                    continue
+                rel_path = artifact.get("path")
+                if not isinstance(rel_path, str) or not rel_path:
+                    errors.append(f"run-state artifact {artifact_name} lacks a relative path")
+                    continue
+                parsed_path = Path(rel_path)
+                if parsed_path.is_absolute() or ".." in parsed_path.parts:
+                    errors.append(f"run-state artifact {artifact_name} has unsafe path: {rel_path}")
+                    continue
+                normalized = parsed_path.as_posix()
+                if normalized in artifact_by_path:
+                    errors.append(f"run-state has duplicate artifact path: {normalized}")
+                artifact_by_path[normalized] = artifact
+
+            required_artifacts = [
+                "SKILL.md",
+                "references/source-ledger.md",
+                "references/source-index.md",
+                *(f"references/research/general/{name}" for name in GENERAL_FILES),
+                "references/research/general/G5-omission.md"
+                if soul_disabled
+                else "references/research/general/G5-soul-layer.md",
+                *(f"validation/{name}" for name in VALIDATION_FILES),
+                *(
+                    path.relative_to(project).as_posix()
+                    for path in sorted((project / "references/research/specialist").glob("A*.md"))
+                ),
+            ]
+            for rel_path in required_artifacts:
+                artifact = artifact_by_path.get(rel_path)
+                if artifact is None:
+                    errors.append(f"run-state lacks verified artifact entry: {rel_path}")
+                    continue
+                artifact_path = project / rel_path
+                if artifact.get("status") != "verified":
+                    errors.append(f"run-state artifact is not verified: {rel_path}")
+                if artifact_path.is_file():
+                    expected_hash = f"sha256:{file_sha256(artifact_path)}"
+                    if artifact.get("sha256") != expected_hash:
+                        errors.append(f"run-state artifact hash mismatch: {rel_path}")
 
     ledger_path = project / "references" / "source-ledger.md"
     if not ledger_path.exists():

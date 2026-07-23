@@ -1,7 +1,7 @@
 ---
 name: god-skill
 description: "Use when the user asks to distill, deeply understand, model, or create a reusable perspective skill for a real or fictional person: '누구를 증류해', '그 사람의 사고방식으로 분석해', '인물 스킬을 만들어', 'god skill', '上帝造人', '蒸馏某人', 'distill X', 'build X perspective', or when local interviews, writings, transcripts, works, and decision records should be synthesized into an evidence-grounded cognitive operating system."
-version: 1.0.0-hermes.1
+version: 1.0.0-hermes.2
 author: "fattly; Hermes adaptation by 3_headed"
 license: MIT
 metadata:
@@ -71,7 +71,7 @@ metadata:
 | 필요 | 우선 경로 | 대체 경로 |
 |---|---|---|
 | 로컬 자료 | `search_files` → `read_file` | 문서 형식별 관련 skill(OCR/PDF/Obsidian 등) |
-| 직접 웹 원문 | `web_extract` | 동적 페이지는 `browser_*`; 실패 시 `terminal`의 읽기 전용 HTTP 요청 |
+| 직접 웹 원문 | `web_extract` | 동적 페이지는 `browser_navigate` → `browser_snapshot`; 실패 시 `terminal`의 읽기 전용 HTTP 요청 |
 | 넓은 웹 탐색 | `web_search` | 관련 전문 skill 또는 브라우저 검색; unavailable 상태를 기록 |
 | 동영상/소셜 | `youtube-content`, `twitter-reader` 등 관련 skill | 공식 transcript·원 게시물 직접 URL |
 | 병렬 연구 | `delegate_task` batch | delegation이 없으면 부모가 lane을 순차 실행 |
@@ -202,7 +202,7 @@ python3 "<god-skill-skill-dir>/scripts/validate_persona_skill.py" /absolute/path
 ## Step 9: Deliver, Install, and Verify
 
 1. 작업 디렉터리, source 수/종류, 가장 큰 불확실성, QA 결과를 보고한다.
-2. 설치 요청이 있으면 최종 skill과 실행에 필요한 정리 참조만 user-local Hermes skill로 생성·복사한다. `source-index.md`는 포함하되 내부 `source-ledger.md`, raw 자료, validation 보고서, `run-state.json`, 절대 로컬 경로는 설치본에서 제외한다.
+2. 설치 요청이 있으면 최종 skill과 실행에 필요한 정리 참조만 user-local Hermes skill로 생성·복사한다. 새 이름이면 `skill_manage(action='create')`, 기존 설치를 갱신할 때는 전체 `SKILL.md`를 read-back한 뒤 `skill_manage(action='edit')`를 사용한다. `source-index.md`는 포함하되 내부 `source-ledger.md`, raw 자료, validation 보고서, `run-state.json`, 절대 로컬 경로는 설치본에서 제외한다.
 3. `skills_list`와 `skill_view(name='<generated-skill>')`로 실제 로드를 검증한다.
 4. 최종 보고에는 installed path와 검증 결과를 포함한다. 파일 생성이나 child의 성공 문구만으로 완료라고 하지 않는다.
 

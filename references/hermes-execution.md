@@ -10,7 +10,7 @@ Before research, inventory only tools actually visible in the current session.
 |---|---|---|
 | Local discovery | `search_files(target='files')` | user-provided manifest |
 | Local text | `read_file` | format-specific skill for PDF/OCR/Office |
-| Exact URL | `web_extract` | `browser_navigate` + snapshot; read-only HTTP via `terminal` |
+| Exact URL | `web_extract` | `browser_navigate` + `browser_snapshot`; read-only HTTP via `terminal` |
 | Broad discovery | `web_search` | specialist reader or browser search |
 | Social/video | matching reader skill | official account, transcript, or source page |
 | Parallel reasoning | `delegate_task(tasks=[...])` | parent agent sequential lanes |
@@ -61,7 +61,18 @@ Create `run-state.json` before delegation.
     "independent_validation": "pending",
     "install": "pending"
   },
-  "artifacts": {},
+  "artifacts": {
+    "final_skill": {
+      "path": "SKILL.md",
+      "sha256": "sha256:<64 lowercase hex>",
+      "status": "verified"
+    },
+    "g1": {
+      "path": "references/research/general/G1-conversations.md",
+      "sha256": "sha256:<64 lowercase hex>",
+      "status": "verified"
+    }
+  },
   "source_counts": {
     "total": 0,
     "primary": 0,
@@ -75,7 +86,7 @@ Create `run-state.json` before delegation.
 }
 ```
 
-Write state after every verified phase, not after merely dispatching a child.
+Write state after every verified phase, not after merely dispatching a child. Every produced artifact gets a project-relative `path`, the hash of the exact bytes as `sha256:<hex>`, and `status: verified` only after parent read-back. Before strict validation, identity, ingest, waves 1–2, synthesis, and independent validation must be `verified`; wave 3 is `verified` or `omitted` when the soul layer is disabled; static validation is `in_progress` while the validator runs.
 
 ## 3. Source Ledger Schema
 
@@ -258,7 +269,7 @@ Pass when:
 
 Prefer Hermes skill tools so profile boundaries and validation are respected:
 
-1. `skill_manage(action='create', name='<slug>-perspective', category='<closest-category>', content=<SKILL.md>)`
+1. For a new name use `skill_manage(action='create', name='<slug>-perspective', category='<closest-category>', content=<SKILL.md>)`. For an already-installed generated skill, read it first and use `skill_manage(action='edit', name='<slug>-perspective', content=<complete updated SKILL.md>)` rather than deleting it.
 2. Copy only runtime-safe references with `skill_manage(action='write_file', ...)`. Include sanitized `source-index.md`; exclude internal `source-ledger.md`, raw sources, validation reports, `run-state.json`, and absolute local paths.
 3. `skills_list(category='<category>')`.
 4. `skill_view(name='<slug>-perspective')`.

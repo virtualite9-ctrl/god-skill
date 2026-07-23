@@ -15,7 +15,7 @@
 
 ## 설치
 
-Hermes의 제3자 GitHub 설치 경로를 사용한다. 먼저 security scan 결과를 확인한다.
+Hermes의 제3자 GitHub 설치 경로를 사용한다. `inspect`는 내용 preview이며, 실제 security scan verdict는 `install`이 확인 프롬프트를 띄우기 전에 표시한다. `--force` 없이 safe 판정을 받은 경우에만 설치한다.
 
 ```bash
 hermes skills inspect https://raw.githubusercontent.com/virtualite9-ctrl/god-skill/main/SKILL.md
@@ -77,7 +77,7 @@ python3 -m unittest discover -s tests -v
 python3 -m py_compile scripts/validate_persona_skill.py
 ```
 
-현재 회귀 suite는 정상 경로와 real-minor 차단, private G5 생략, source-count 위조, QA hash 위조, 긴 인용, 절대 경로, malformed YAML/UTF-8, decoy 입력을 포함한 15개 사례를 검사한다.
+현재 회귀 suite는 정상 경로와 real-minor 차단, private G5 생략, source-count 위조, QA hash 위조, run-state pending/stale artifact hash, 긴 인용, 절대 경로, malformed YAML/UTF-8, decoy 입력을 포함한 17개 사례를 검사한다.
 
 생성된 인물 프로젝트:
 

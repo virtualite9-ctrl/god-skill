@@ -217,9 +217,8 @@ metadata:
 
 - 설치용 정리 색인: `references/source-index.md`
 - 전체 내부 원장·raw 자료·절대 로컬 경로는 설치본에 포함하지 않는다.
-- 일반 연구: `references/research/general/`
-- 전문 연구: `references/research/specialist/`
-- 검증: `validation/`
+- 저작 workspace 전용(설치본 제외): `references/research/general/`, `references/research/specialist/`, `validation/`
+- 설치 후 runtime은 이 문서의 claim-level `[S###]`와 sanitized `references/source-index.md`만 사용한다.
 - 정보 cutoff: YYYY-MM-DD
 - 영혼층 종합 신뢰도:
 

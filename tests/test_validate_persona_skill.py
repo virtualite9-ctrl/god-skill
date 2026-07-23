@@ -50,6 +50,39 @@ class PersonaSkillValidatorTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+    def refresh_run_state(self, project: Path) -> None:
+        state_path = project / "run-state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        soul_enabled = state["scope"]["soul_layer"]
+        state["phases"] = {
+            "identity": "verified",
+            "ingest": "verified",
+            "wave_1": "verified",
+            "wave_2": "verified",
+            "wave_3_g5": "verified" if soul_enabled else "omitted",
+            "synthesis": "verified",
+            "static_validation": "in_progress",
+            "independent_validation": "verified",
+            "install": "pending",
+        }
+        paths = [
+            project / "SKILL.md",
+            project / "references/source-ledger.md",
+            project / "references/source-index.md",
+            *sorted((project / "references/research/general").glob("*.md")),
+            *sorted((project / "references/research/specialist").glob("A*.md")),
+            *(project / "validation" / name for name in MODULE.VALIDATION_FILES),
+        ]
+        state["artifacts"] = {
+            f"artifact_{index:02d}": {
+                "path": path.relative_to(project).as_posix(),
+                "sha256": f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}",
+                "status": "verified",
+            }
+            for index, path in enumerate(paths, start=1)
+        }
+        state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
     def make_valid_project(self, root: Path) -> Path:
         project = root / "ada-lovelace-perspective"
         project.mkdir(parents=True)
@@ -189,6 +222,7 @@ class PersonaSkillValidatorTests(unittest.TestCase):
         )
 
         self.write_validation_reports(project)
+        self.refresh_run_state(project)
         return project
 
     def test_valid_project_passes(self) -> None:
@@ -311,8 +345,29 @@ class PersonaSkillValidatorTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.write_validation_reports(project)
+            self.refresh_run_state(project)
             result = MODULE.validate(project, draft=False, allow_no_specialist=False)
             self.assertTrue(result["valid"], result)
+
+    def test_pending_run_state_phase_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self.make_valid_project(Path(tmp))
+            state_path = project / "run-state.json"
+            state = json.loads(state_path.read_text())
+            state["phases"]["synthesis"] = "pending"
+            state_path.write_text(json.dumps(state), encoding="utf-8")
+            result = MODULE.validate(project, draft=False, allow_no_specialist=False)
+            self.assertFalse(result["valid"])
+            self.assertTrue(any("phase synthesis" in error for error in result["errors"]))
+
+    def test_stale_run_state_artifact_hash_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self.make_valid_project(Path(tmp))
+            g1 = project / "references/research/general/G1-conversations.md"
+            g1.write_text(g1.read_text() + "\nChanged after verification.\n", encoding="utf-8")
+            result = MODULE.validate(project, draft=False, allow_no_specialist=False)
+            self.assertFalse(result["valid"])
+            self.assertTrue(any("artifact hash mismatch" in error for error in result["errors"]))
 
     def test_real_minor_is_prohibited(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
