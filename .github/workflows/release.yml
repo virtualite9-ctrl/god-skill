@@ -1,6 +1,7 @@
 name: Validate Hermes God Skill
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
